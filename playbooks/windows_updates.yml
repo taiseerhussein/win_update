@@ -5,6 +5,7 @@
 - name: Search and apply Windows Updates on EC2 Windows hosts
   hosts: win22
   gather_facts: no
+
   vars:
     # Adjust to your policy. Common categories: CriticalUpdates, SecurityUpdates, UpdateRollups, Updates, DefinitionUpdates
     update_categories:
