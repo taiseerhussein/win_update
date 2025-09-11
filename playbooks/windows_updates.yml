@@ -1,39 +1,44 @@
 ---
-# file: windows_updates_ec2.yml
-# Purpose: Search for and apply Windows Updates on EC2 Windows hosts
-
 - name: Search and apply Windows Updates on EC2 Windows hosts
   hosts: win22
   gather_facts: no
 
   vars:
-    # Adjust to your policy. Common categories: CriticalUpdates, SecurityUpdates, UpdateRollups, Updates, DefinitionUpdates
+    
     update_categories:
       - SecurityUpdates
       - CriticalUpdates
       - UpdateRollups
       - Updates
+      - Application
+      - Connectors
+      - Critical Updates
+      - Definition Updates
+      - Developer Kits
+      - Feature Packs
+      - Guidance
+      - Security Updates
+      - Service Packs
+      - Tools
+      - Update Rollups
+      - Updates
+      - Upgrades
 
-    # Where to write a log on the Windows host
     win_updates_log_path: 'C:\Windows\Temp\ansible_win_updates.log'
-
-    # How many install passes to attempt (covers multi-stage updates that appear after a reboot)
     install_passes: 3
-
-    # If you must skip reboots (not recommended), set this to true
     skip_reboot: false
 
-  pre_tasks:
-    - name: Ensure this is Windows
-      ansible.builtin.assert:
-        that: ansible_os_family is not defined or ansible_os_family == 'Windows'
-        fail_msg: "This playbook targets Windows only."
+  # pre_tasks:
+  #   - name: Ensure this is Windows
+  #     ansible.builtin.assert:
+  #       that: ansible_os_family is not defined or ansible_os_family == 'Windows'
+  #       fail_msg: "This playbook targets Windows only."
 
-    - name: Display target host and connection info
-      ansible.builtin.debug:
-        msg:
-          - "Host: {{ inventory_hostname }}"
-          - "Connecting via WinRM. Ensure SG allows 5986/tcp and WinRM is configured."
+  #   - name: Display target host and connection info
+  #     ansible.builtin.debug:
+  #       msg:
+  #         - "Host: {{ inventory_hostname }}"
+  #         - "Connecting via WinRM. Ensure SG allows 5986/tcp and WinRM is configured."
 
   tasks:
     - name: Search for available updates (no install)
@@ -54,8 +59,6 @@
           windows_updates_found: "{{ search_result.found_update_count | default(0) }}"
           windows_updates_titles: "{{ (search_result.updates | default([])) | map(attribute='title') | list }}"
 
-    # ---- INSTALL PHASE ----
-    # We run win_updates multiple times in case additional updates become available after a reboot.
     # - name: Install updates (multiple passes with safe reboots)
     #   ansible.windows.win_updates:
     #     state: installed
