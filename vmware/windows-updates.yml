@@ -59,21 +59,21 @@
           windows_updates_found: "{{ search_result.found_update_count | default(0) }}"
           windows_updates_titles: "{{ (search_result.updates | default([])) | map(attribute='title') | list }}"
 
-    # - name: Install updates (multiple passes with safe reboots)
-    #   ansible.windows.win_updates:
-    #     state: installed
-    #     category_names: "{{ update_categories }}"
-    #     reboot: "{{ (not skip_reboot) | bool }}"
-    #     log_path: "{{ win_updates_log_path }}"
-    #     reboot_timeout: 3600
-    #   register: install_result
-    #   until: install_result.installed_update_count | default(0) == 0 and (install_result.reboot_required | default(false)) == false
-    #   retries: "{{ install_passes }}"
-    #   delay: 30
+    - name: Install updates (multiple passes with safe reboots)
+      ansible.windows.win_updates:
+        state: installed
+        category_names: "{{ update_categories }}"
+        reboot: "{{ (not skip_reboot) | bool }}"
+        log_path: "{{ win_updates_log_path }}"
+        reboot_timeout: 3600
+      register: install_result
+      until: install_result.installed_update_count | default(0) == 0 and (install_result.reboot_required | default(false)) == false
+      retries: "{{ install_passes }}"
+      delay: 30
 
-    # - name: Final status
-    #   ansible.builtin.debug:
-    #     msg:
-    #       - "Installed this pass: {{ install_result.installed_update_count | default(0) }}"
-    #       - "Reboot required now? {{ install_result.reboot_required | default(false) }}"
-    #       - "Log: {{ win_updates_log_path }}"
+    - name: Final status
+      ansible.builtin.debug:
+        msg:
+          - "Installed this pass: {{ install_result.installed_update_count | default(0) }}"
+          - "Reboot required now? {{ install_result.reboot_required | default(false) }}"
+          - "Log: {{ win_updates_log_path }}"

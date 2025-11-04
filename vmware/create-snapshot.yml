@@ -1,0 +1,49 @@
+---
+- name: VMware VM Snapshot Playbook for AAP
+  hosts: windows2019srv_64Guest
+  connection: local
+  gather_facts: no
+  vars_files:
+    - vmware-cred.yml
+  vars:
+    vcenter_hostname: "{{ m_vmware_host }}"
+    vm_name: "{{ hostvars[inventory_hostname]['config.name'] }}"
+    snapshot_description: "Pre-maintenance snapshot taken with Ansible"
+    date_time: "{{ lookup('pipe', 'TZ=US/Central date +%Y-%m-%d@%H:%M:%S') }}" 
+    snapshot_name: "{{ vm_name }}_{{ date_time }}"
+  tasks:
+   
+
+# Your original failing task would be here...
+    - name: "Create a snapshot for the VM: {{ vm_name }}"
+      # This module manages VMware guest snapshots.
+      vmware.vmware.vm_snapshot:
+        hostname: "{{ m_vmware_host }}"
+        username: "{{ m_vmware_uname }}"
+        password: "{{ m_vmware_pass }}"
+        datacenter: "{{ m_datacenter_name }}"
+        folder: "/{{ m_datacenter_name }}/vm/"
+        validate_certs: false
+
+        name: "{{ vm_name }}"
+        state: present
+
+        # Snapshot Specifics
+        snapshot_name: "{{ snapshot_name }}" # Creates a unique name with a timestamp
+        description: "{{ snapshot_description }}"
+        quiesce: true
+        # memory_snapshot: true
+      delegate_to: localhost
+      register: snapshot_result
+      no_log: false
+
+    - name: "Display snapshot creation result"
+      ansible.builtin.debug:
+        var: snapshot_result
+
+    - name: Save snapshot name  in aap state
+      ansible.builtin.set_stats:
+        data:
+          snapshot_name: "{{ snapshot_result.snapshot.name }}"
+        per_host: false        # Make it a global statistic
+        aggregate: true
